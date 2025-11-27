@@ -1,16 +1,5 @@
 # 🎓 Student Achievement Reporting System – Backend API  
 Backend untuk Sistem Pelaporan Prestasi Mahasiswa menggunakan **Golang Fiber**, **PostgreSQL**, **MongoDB**, dan **JWT RBAC**, serta menerapkan **Clean Architecture**.  
-Project ini dibuat sebagai bagian dari **Ujian Akhir Semester (UAS)** Mata Kuliah *Pemrograman Backend Lanjut*.
-
-## 🚀 Tech Stack
-- Golang (Fiber Framework)
-- Clean Architecture
-- PostgreSQL + GORM
-- MongoDB
-- JWT Authentication
-- RBAC
-- Swagger Docs
-
 
 ## 📌 Fitur Utama
 ### Mahasiswa
