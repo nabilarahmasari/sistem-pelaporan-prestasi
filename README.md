@@ -11,22 +11,6 @@ Project ini dibuat sebagai bagian dari **Ujian Akhir Semester (UAS)** Mata Kulia
 - RBAC
 - Swagger Docs
 
-## 📁 Project Structure
-```
-project/
-│
-├── app/
-│   ├── models/
-│   ├── mongo_models/
-│   ├── repositories/
-│   ├── services/
-│   ├── controllers/
-│
-├── config/
-├── routes/
-├── middlewares/
-├── main.go
-```
 
 ## 📌 Fitur Utama
 ### Mahasiswa
@@ -41,12 +25,4 @@ project/
 - Kelola user, role, permission
 - Kelola referensi prestasi
 
-## ⚙️ Cara Menjalankan
-1. Clone repo  
-2. `go mod tidy`  
-3. Buat file `.env`  
-4. `go run main.go`
 
-## 👨‍💻 Author
-Kenzie  
-Project UAS Backend.
