@@ -1,9 +1,14 @@
-package models
+package model
+
+import "time"
 
 type Permission struct {
-	ID          string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Resource    string
-	Action      string
-	Description string
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type PermissionResponse struct {
+	Name string `json:"name"`
 }
