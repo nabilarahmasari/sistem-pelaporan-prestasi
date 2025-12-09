@@ -1,57 +1,49 @@
 package main
 
 import (
-	"database/sql"
 	"log"
-
+	"project_uas/app/repository"
+	"project_uas/routes"
+	"project_uas/app/service"
 	"project_uas/config"
 	"project_uas/database"
-	"project_uas/routes"
-	"project_uas/app/repository"
-	"project_uas/app/service"
-	"project_uas/middleware"
+	"project_uas/utils"
 
-	_ "github.com/lib/pq"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func main() {
-
+	// Load config
 	config.LoadEnv()
 
-	// Connect database (sql.DB)
-	db, err := sql.Open("postgres", config.AppConfig.DBUrl)
+	// Initialize JWT
+	utils.InitJWT()
+
+	// Connect database
+	database.ConnectDatabase()
+	sqlDB, err := database.DB.DB()
 	if err != nil {
-		log.Fatal("Failed connect:", err)
-	}
-	defer db.Close()
-
-	// Test connection
-	if err := db.Ping(); err != nil {
-		log.Fatal("Failed ping database:", err)
-	}
-	log.Println("✅ Database connected!")
-
-	// Run migration
-	if err := database.RunMigrations(db); err != nil {
-		log.Fatal("Migration failed:", err)
+		log.Fatal("Failed to get database connection:", err)
 	}
 
-	// Run seeder
-	if err := database.RunSeeders(db); err != nil {
-		log.Fatal("Seeder failed:", err)
-	}
+	// Initialize repositories
+	userRepo := repository.NewUserRepository(sqlDB)
+	roleRepo := repository.NewRoleRepository(sqlDB)
+	permRepo := repository.NewPermissionRepository(sqlDB)
+	studentRepo := repository.NewStudentRepository(sqlDB)
+	lecturerRepo := repository.NewLecturerRepository(sqlDB)
+
+	// Initialize services
+	authService := service.NewAuthService(userRepo, roleRepo, permRepo)
+	userService := service.NewUserService(userRepo, roleRepo, permRepo, studentRepo, lecturerRepo)
+	studentService := service.NewStudentService(studentRepo, lecturerRepo, userRepo)
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
-				code = e.Code
-			}
-			return c.Status(code).JSON(fiber.Map{
+			return c.Status(500).JSON(fiber.Map{
 				"status": "error",
 				"error":  err.Error(),
 			})
@@ -59,24 +51,10 @@ func main() {
 	})
 
 	// Middleware
-	app.Use(logger.New())
 	app.Use(cors.New())
+	app.Use(logger.New())
 
-	// ⭐ PENTING: Initialize Repositories
-	userRepo := repository.NewUserRepository(db)
-	roleRepo := repository.NewRoleRepository(db)
-	permRepo := repository.NewPermissionRepository(db)
-
-	// ⭐ PENTING: Initialize Services
-	authService := service.NewAuthService(userRepo, roleRepo, permRepo)
-
-	// ⭐ PENTING: Initialize Middleware
-	authMiddleware := middleware.AuthRequired
-
-	// ⭐ PENTING: Setup Routes (INI YANG KURANG!)
-	routes.AuthRoutes(app, authService, authMiddleware)
-
-	// Health check endpoint
+	// Health check
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "success",
@@ -84,7 +62,17 @@ func main() {
 		})
 	})
 
+	// Register routes
+	routes.AuthRoutes(app, authService)
+	routes.UserRoutes(app, userService)
+	routes.StudentRoutes(app, studentService)
+
 	// Start server
-	log.Println("🚀 Server starting on http://localhost:3000")
-	log.Fatal(app.Listen(":3000"))
+	port := config.AppConfig.Port
+	if port == "" {
+		port = "3000"
+	}
+
+	log.Printf("Server running on port %s", port)
+	log.Fatal(app.Listen(":" + port))
 }

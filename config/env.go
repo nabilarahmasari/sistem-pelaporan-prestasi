@@ -16,6 +16,19 @@ func LoadEnv() {
 	}
 
 	AppConfig = Config{
-		DBUrl: os.Getenv("DATABASE_URL"),
+		DBUrl:     os.Getenv("DATABASE_URL"),
+		Port:      getEnv("PORT", "3000"),           // default 8080
+		JWTSecret: getEnv("JWT_SECRET", "default-secret-key"),
 	}
+
+	log.Println("Environment variables loaded successfully")
+}
+
+// Helper function untuk get env dengan default value
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }

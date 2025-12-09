@@ -20,6 +20,34 @@ func AuthRequired(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "invalid token"})
 	}
 
+	// ⭐ SET USER CLAIMS
 	c.Locals("user", claims)
+	
+	// ⭐ SET PERMISSIONS - INI YANG KURANG!
+	c.Locals("permissions", claims.Permissions)
+	
 	return c.Next()
+}
+
+func RequirePermission(requiredPermission string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		permissions, ok := c.Locals("permissions").([]string)
+		if !ok {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"status": "error",
+				"error":  "Akses ditolak: permission tidak tersedia",
+			})
+		}
+
+		for _, perm := range permissions {
+			if perm == requiredPermission {
+				return c.Next()
+			}
+		}
+
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status": "error",
+			"error":  "Akses ditolak: permission tidak mencukupi",
+		})
+	}
 }

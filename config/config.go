@@ -1,5 +1,7 @@
 package config
 
 type Config struct {
-	DBUrl string
+	DBUrl     string
+	Port      string
+	JWTSecret string
 }

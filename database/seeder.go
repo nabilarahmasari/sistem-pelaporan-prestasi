@@ -6,40 +6,29 @@ import (
 	"log"
 )
 
-// RunSeeders - Execute all database seeders
 func RunSeeders(db *sql.DB) error {
 	log.Println("Running seeders...")
 
-	// Seed Roles
 	if err := seedRoles(db); err != nil {
 		return err
 	}
 
-	// Seed Permissions
 	if err := seedPermissions(db); err != nil {
 		return err
 	}
 
-	// Seed Role Permissions
 	if err := seedRolePermissions(db); err != nil {
 		return err
 	}
 
-	// Seed Users
 	if err := seedUsers(db); err != nil {
 		return err
 	}
-
-	// Seed Students & Lecturers
-	if err := seedStudentsAndLecturers(db); err != nil {
-		return err
-	}
-
+	
 	log.Println("All seeders completed successfully! ✅")
 	return nil
 }
 
-// seedRoles - Insert initial roles
 func seedRoles(db *sql.DB) error {
 	log.Println("Seeding roles...")
 
@@ -69,7 +58,6 @@ func seedRoles(db *sql.DB) error {
 	return nil
 }
 
-// seedPermissions - Insert initial permissions
 func seedPermissions(db *sql.DB) error {
 	log.Println("Seeding permissions...")
 
@@ -79,27 +67,13 @@ func seedPermissions(db *sql.DB) error {
 		action      string
 		description string
 	}{
-		// User permissions
-		{"user:read", "user", "read", "Membaca data user"},
-		{"user:create", "user", "create", "Membuat user baru"},
-		{"user:update", "user", "update", "Mengupdate data user"},
-		{"user:delete", "user", "delete", "Menghapus user"},
-
-		// Role permissions
-		{"role:read", "role", "read", "Membaca data role"},
-		{"role:manage", "role", "manage", "Mengelola role dan permission"},
-
-		// Prestasi permissions
-		{"prestasi:read", "prestasi", "read", "Membaca data prestasi"},
-		{"prestasi:create", "prestasi", "create", "Membuat prestasi baru"},
-		{"prestasi:update", "prestasi", "update", "Mengupdate prestasi sendiri"},
-		{"prestasi:delete", "prestasi", "delete", "Menghapus prestasi"},
-		{"prestasi:verify", "prestasi", "verify", "Memverifikasi prestasi mahasiswa bimbingannya"},
-		{"prestasi:manage", "prestasi", "manage", "Mengelola semua prestasi"},
-
-		// Dashboard permissions
-		{"dashboard:view", "dashboard", "view", "Melihat dashboard"},
-		{"dashboard:admin", "dashboard", "admin", "Melihat dashboard admin"},
+		{"user:manage", "user", "manage", "Mengelola data user"},
+		{"achievement:create", "achievement", "create", "Membuat prestasi baru"},
+		{"achievement:read", "achievement", "read", "Membaca prestasi"},
+		{"achievement:update", "achievement", "update", "Mengupdate prestasi"},
+		{"achievement:delete", "achievement", "delete", "Menghapus prestasi"},
+		{"achievement:verify", "achievement", "verify", "Memverifikasi prestasi mahasiswa"},
+		{"report:system", "report", "system", "Menghasilkan report"},
 	}
 
 	for _, perm := range permissions {
@@ -119,29 +93,29 @@ func seedPermissions(db *sql.DB) error {
 	return nil
 }
 
-// seedRolePermissions - Assign permissions to roles
 func seedRolePermissions(db *sql.DB) error {
 	log.Println("Seeding role permissions...")
 
-	// Admin - Full access ke semua fitur
 	adminPerms := []string{
-		"user:read", "user:create", "user:update", "user:delete",
-		"role:read", "role:manage",
-		"prestasi:read", "prestasi:create", "prestasi:update", "prestasi:delete", 
-		"prestasi:verify", "prestasi:manage",
-		"dashboard:view", "dashboard:admin",
+		"user:manage",
+		"achievement:read",
+		"achievement:create",
+		"achievement:update",
+		"achievement:delete",
+		"achievement:verify",
+		"report:system",
 	}
 
-	// Mahasiswa - Create, read, update prestasi sendiri
 	mahasiswaPerms := []string{
-		"prestasi:read", "prestasi:create", "prestasi:update",
-		"dashboard:view",
+		"achievement:read",
+		"achievement:create",
+		"achievement:update",
+		"achievement:delete",
 	}
 
-	// Dosen Wali - Read, verify prestasi mahasiswa bimbingannya
 	dosenWaliPerms := []string{
-		"prestasi:read", "prestasi:verify",
-		"dashboard:view",
+		"achievement:read",
+		"achievement:verify",
 	}
 
 	rolePermissions := map[string][]string{
@@ -171,11 +145,9 @@ func seedRolePermissions(db *sql.DB) error {
 	return nil
 }
 
-// seedUsers - Insert initial users
 func seedUsers(db *sql.DB) error {
 	log.Println("Seeding users...")
 
-	// Default password: "password123"
 	defaultPassword, err := utils.HashPassword("password123")
 	if err != nil {
 		log.Printf("Failed to hash password: %v", err)
@@ -213,37 +185,5 @@ func seedUsers(db *sql.DB) error {
 	}
 
 	log.Println("Users seeded ✅")
-	log.Println("Default credentials:")
-	log.Println("  - Username: admin, Password: password123")
-	log.Println("  - Username: mahasiswa1, Password: password123")
-	log.Println("  - Username: dosenwali1, Password: password123")
 	return nil
-}
-
-func seedStudentsAndLecturers(db *sql.DB) error {
-    log.Println("Seeding students & lecturers...")
-
-    // Example seeding
-    _, err := db.Exec(`
-        INSERT INTO students (id, student_id, study_program, year_of_entry)
-        SELECT u.id, 'NIM001', 'Teknik Informatika', 2022
-        FROM users u
-        JOIN roles r ON u.role_id = r.id
-        WHERE u.username = 'mahasiswa1'
-        ON CONFLICT (id) DO NOTHING;
-    `)
-    if err != nil { return err }
-
-    _, err = db.Exec(`
-        INSERT INTO lecturers (id, lecturer_id, department)
-        SELECT u.id, 'NIP001', 'Teknik Informatika'
-        FROM users u
-        JOIN roles r ON u.role_id = r.id
-        WHERE u.username = 'dosenwali1'
-        ON CONFLICT (id) DO NOTHING;
-    `)
-    if err != nil { return err }
-
-    log.Println("Students & Lecturers seeded ✓")
-    return nil
 }
