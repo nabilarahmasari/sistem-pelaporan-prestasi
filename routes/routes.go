@@ -55,18 +55,72 @@ func StudentRoutes(app *fiber.App, studentService *service.StudentService) {
 	students.Get("/", studentService.GetAllStudents)           // GET /api/v1/students
 	students.Get("/:id", studentService.GetStudentByID)        // GET /api/v1/students/:id
 	students.Put("/:id/advisor", studentService.SetAdvisor)    // PUT /api/v1/students/:id/advisor
-	
-	// TODO: GET /api/v1/students/:id/achievements (nanti saat implement achievements)
 }
 
 //
-// ==================== LECTURER ROUTES (OPTIONAL) ======================
+// ==================== ACHIEVEMENT ROUTES ======================
 //
 
-// func LecturerRoutes(app *fiber.App, lecturerService *service.LecturerService) {
-// 	lecturers := app.Group("/api/v1/lecturers")
-// 	lecturers.Use(middleware.AuthRequired)
-//
-// 	lecturers.Get("/", lecturerService.GetAllLecturers)
-// 	lecturers.Get("/:id/advisees", lecturerService.GetAdvisees)
-// }
+func AchievementRoutes(app *fiber.App, achievementService *service.AchievementService) {
+	achievements := app.Group("/api/v1/achievements")
+
+	// Auth required untuk semua endpoint
+	achievements.Use(middleware.AuthRequired)
+
+	// GET /achievements - List achievements (filtered by role)
+	// Mahasiswa: achievement:read (own)
+	// Dosen Wali: achievement:read (advisees)
+	// Admin: achievement:read (all)
+	achievements.Get("/", 
+		middleware.RequirePermission("achievement:read"),
+		achievementService.GetAchievements,
+	)
+
+	// GET /achievements/:id - Detail achievement
+	achievements.Get("/:id",
+		middleware.RequirePermission("achievement:read"),
+		achievementService.GetAchievementByID,
+	)
+
+	// POST /achievements - Create achievement (Mahasiswa only)
+	achievements.Post("/",
+		middleware.RequirePermission("achievement:create"),
+		achievementService.CreateAchievement,
+	)
+
+	// PUT /achievements/:id - Update achievement (Mahasiswa only, status = draft)
+	achievements.Put("/:id",
+		middleware.RequirePermission("achievement:update"),
+		achievementService.UpdateAchievement,
+	)
+
+	// DELETE /achievements/:id - Delete achievement (Mahasiswa only, status = draft)
+	achievements.Delete("/:id",
+		middleware.RequirePermission("achievement:delete"),
+		achievementService.DeleteAchievement,
+	)
+
+	// POST /achievements/:id/submit - Submit for verification (Mahasiswa only)
+	achievements.Post("/:id/submit",
+		middleware.RequirePermission("achievement:update"),
+		achievementService.SubmitForVerification,
+	)
+
+	// POST /achievements/:id/verify - Verify achievement (Dosen Wali only)
+	achievements.Post("/:id/verify",
+		middleware.RequirePermission("achievement:verify"),
+		achievementService.VerifyAchievement,
+	)
+
+	// POST /achievements/:id/reject - Reject achievement (Dosen Wali only)
+	achievements.Post("/:id/reject",
+		middleware.RequirePermission("achievement:verify"),
+		achievementService.RejectAchievement,
+	)
+
+	// POST /achievements/:id/attachments - Upload attachment (Mahasiswa only)
+	achievements.Post("/:id/attachments",
+		middleware.RequirePermission("achievement:update"),
+		achievementService.UploadAttachment,
+	)
+}

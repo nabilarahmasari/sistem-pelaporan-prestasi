@@ -21,12 +21,15 @@ func main() {
 	// Initialize JWT
 	utils.InitJWT()
 
-	// Connect database
+	// Connect PostgreSQL database
 	database.ConnectDatabase()
 	sqlDB, err := database.DB.DB()
 	if err != nil {
 		log.Fatal("Failed to get database connection:", err)
 	}
+
+	// Connect MongoDB database
+	database.ConnectMongoDB()
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(sqlDB)
@@ -34,11 +37,13 @@ func main() {
 	permRepo := repository.NewPermissionRepository(sqlDB)
 	studentRepo := repository.NewStudentRepository(sqlDB)
 	lecturerRepo := repository.NewLecturerRepository(sqlDB)
+	achievementRepo := repository.NewAchievementRepository(sqlDB, database.MongoDB)
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, roleRepo, permRepo)
 	userService := service.NewUserService(userRepo, roleRepo, permRepo, studentRepo, lecturerRepo)
 	studentService := service.NewStudentService(studentRepo, lecturerRepo, userRepo)
+	achievementService := service.NewAchievementService(achievementRepo, studentRepo, lecturerRepo, userRepo)
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
@@ -66,6 +71,7 @@ func main() {
 	routes.AuthRoutes(app, authService)
 	routes.UserRoutes(app, userService)
 	routes.StudentRoutes(app, studentService)
+	routes.AchievementRoutes(app, achievementService)
 
 	// Start server
 	port := config.AppConfig.Port

@@ -16,9 +16,11 @@ func LoadEnv() {
 	}
 
 	AppConfig = Config{
-		DBUrl:     os.Getenv("DATABASE_URL"),
-		Port:      getEnv("PORT", "3000"),           // default 8080
-		JWTSecret: getEnv("JWT_SECRET", "default-secret-key"),
+		DBUrl:      os.Getenv("DATABASE_URL"),
+		MongoURL:   getEnv("MONGO_URL", "mongodb://localhost:27017"),
+		MongoDB:    getEnv("MONGO_DB", "uas_achievements"),
+		Port:       getEnv("PORT", "3000"),
+		JWTSecret:  getEnv("JWT_SECRET", "default-secret-key"),
 	}
 
 	log.Println("Environment variables loaded successfully")
