@@ -51,6 +51,9 @@ func main() {
 	
 	achievementService := service.NewAchievementService(achievementRepo, studentRepo, lecturerRepo, userRepo)
 
+	reportService := service.NewReportService(achievementRepo, studentRepo, lecturerRepo, userRepo)
+
+
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -82,6 +85,7 @@ func main() {
 	routes.StudentRoutes(app, studentService)
 	routes.LecturerRoutes(app, lecturerService) // NEW
 	routes.AchievementRoutes(app, achievementService)
+	routes.ReportRoutes(app, reportService) // NEW
 
 	// Start server
 	port := config.AppConfig.Port

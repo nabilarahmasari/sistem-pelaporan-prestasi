@@ -163,3 +163,22 @@ func AchievementRoutes(app *fiber.App, achievementService *service.AchievementSe
         achievementService.GetAchievementHistory,
     )
 }
+
+// ==================== FILE 2: routes.go (UPDATE - Add ReportRoutes) ======================
+
+func ReportRoutes(app *fiber.App, reportService *service.ReportService) {
+	reports := app.Group("/api/v1/reports")
+	reports.Use(middleware.AuthRequired)
+
+	// GET /reports/statistics - Get achievement statistics
+	// Authorization: Mahasiswa (own), Dosen Wali (advisees), Admin (all)
+	reports.Get("/statistics",
+		reportService.GetStatistics,
+	)
+
+	// GET /reports/student/:id - Get student report
+	// Authorization: Mahasiswa (own), Dosen Wali (advisees), Admin (all)
+	reports.Get("/student/:id",
+		reportService.GetStudentReport,
+	)
+}
