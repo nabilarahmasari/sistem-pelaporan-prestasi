@@ -127,6 +127,162 @@ func (s *AchievementService) CreateAchievement(c *fiber.Ctx) error {
 }
 
 //
+// ==================== GET ACHIEVEMENT HISTORY (GET /achievements/:id/history) ======================
+// Menampilkan riwayat perubahan status achievement
+//
+
+func (s *AchievementService) GetAchievementHistory(c *fiber.Ctx) error {
+	achievementID := c.Params("id")
+
+	// Get user dari context
+	claims, ok := c.Locals("user").(*model.JWTClaims)
+	if !ok {
+		return c.Status(401).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "unauthorized",
+		})
+	}
+
+	// Get reference dari PostgreSQL
+	reference, err := s.achievementRepo.GetReferenceByID(achievementID)
+	if err != nil {
+		return c.Status(404).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "achievement not found",
+		})
+	}
+
+	// Check authorization
+	if claims.Role == "Mahasiswa" {
+		student, _ := s.studentRepo.FindByUserID(claims.UserID)
+		if student == nil || student.ID != reference.StudentID {
+			return c.Status(403).JSON(model.APIResponse{
+				Status: "error",
+				Error:  "forbidden",
+			})
+		}
+	} else if claims.Role == "Dosen Wali" {
+		lecturer, _ := s.lecturerRepo.FindByUserID(claims.UserID)
+		student, _ := s.studentRepo.FindByID(reference.StudentID)
+		if lecturer == nil || student == nil || student.AdvisorID == nil || *student.AdvisorID != lecturer.ID {
+			return c.Status(403).JSON(model.APIResponse{
+				Status: "error",
+				Error:  "forbidden",
+			})
+		}
+	}
+	// Admin dapat akses semua
+
+	// Build history
+	history := s.buildAchievementHistory(reference)
+
+	return c.JSON(model.APIResponse{
+		Status: "success",
+		Data: fiber.Map{
+			"achievement_id": achievementID,
+			"current_status": reference.Status,
+			"history":        history,
+		},
+	})
+}
+
+//
+// ==================== HELPER: BUILD ACHIEVEMENT HISTORY ======================
+//
+
+type HistoryEntry struct {
+	Status    string  `json:"status"`
+	Timestamp string  `json:"timestamp"`
+	Actor     string  `json:"actor,omitempty"`
+	ActorID   *string `json:"actor_id,omitempty"`
+	Action    string  `json:"action"`
+	Notes     *string `json:"notes,omitempty"`
+}
+
+func (s *AchievementService) buildAchievementHistory(reference *model.AchievementReference) []HistoryEntry {
+	var history []HistoryEntry
+
+	// 1. Draft/Created
+	history = append(history, HistoryEntry{
+		Status:    "draft",
+		Timestamp: reference.CreatedAt.Format("2006-01-02 15:04:05"),
+		Action:    "Achievement created",
+		Notes:     nil,
+	})
+
+	// 2. Submitted (jika ada)
+	if reference.SubmittedAt != nil {
+		history = append(history, HistoryEntry{
+			Status:    "submitted",
+			Timestamp: reference.SubmittedAt.Format("2006-01-02 15:04:05"),
+			Action:    "Submitted for verification",
+			Notes:     nil,
+		})
+	}
+
+	// 3. Verified (jika ada)
+	if reference.Status == "verified" && reference.VerifiedAt != nil {
+		var actorName string
+		var actorID *string
+
+		if reference.VerifiedBy != nil {
+			// Get verifier info
+			user, err := s.userRepo.FindByID(*reference.VerifiedBy)
+			if err == nil {
+				actorName = user.FullName + " (Dosen Wali)"
+				actorID = reference.VerifiedBy
+			}
+		}
+
+		history = append(history, HistoryEntry{
+			Status:    "verified",
+			Timestamp: reference.VerifiedAt.Format("2006-01-02 15:04:05"),
+			Actor:     actorName,
+			ActorID:   actorID,
+			Action:    "Achievement verified",
+			Notes:     nil,
+		})
+	}
+
+	// 4. Rejected (jika ada)
+	if reference.Status == "rejected" {
+		var actorName string
+		var actorID *string
+
+		if reference.VerifiedBy != nil {
+			// Note: VerifiedBy juga dipakai untuk rejection
+			user, err := s.userRepo.FindByID(*reference.VerifiedBy)
+			if err == nil {
+				actorName = user.FullName + " (Dosen Wali)"
+				actorID = reference.VerifiedBy
+			}
+		}
+
+		history = append(history, HistoryEntry{
+			Status:    "rejected",
+			Timestamp: reference.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Actor:     actorName,
+			ActorID:   actorID,
+			Action:    "Achievement rejected",
+			Notes:     reference.RejectionNote,
+		})
+	}
+
+	// 5. Deleted (jika ada)
+	if reference.Status == "deleted" {
+		history = append(history, HistoryEntry{
+			Status:    "deleted",
+			Timestamp: reference.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Action:    "Achievement deleted",
+			Notes:     nil,
+		})
+	}
+
+	return history
+}
+
+
+//
 // ==================== GET ACHIEVEMENTS (GET /achievements) ======================
 // Filtered by role:
 // - Mahasiswa: hanya prestasi sendiri

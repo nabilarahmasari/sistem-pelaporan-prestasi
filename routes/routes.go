@@ -41,22 +41,55 @@ func UserRoutes(app *fiber.App, userService *service.UserService) {
 	users.Delete("/:id", userService.DeleteUser)  // DELETE /api/v1/users/:id
 	users.Put("/:id/role", userService.AssignRole) // PUT /api/v1/users/:id/role
 }
-
 //
 // ==================== STUDENT ROUTES ======================
 //
 
 func StudentRoutes(app *fiber.App, studentService *service.StudentService) {
 	students := app.Group("/api/v1/students")
-
-	// Auth required untuk semua endpoint
 	students.Use(middleware.AuthRequired)
 
-	students.Get("/", studentService.GetAllStudents)           // GET /api/v1/students
-	students.Get("/:id", studentService.GetStudentByID)        // GET /api/v1/students/:id
-	students.Put("/:id/advisor", studentService.SetAdvisor)    // PUT /api/v1/students/:id/advisor
+	// GET /students - List all students
+	students.Get("/",
+		studentService.GetAllStudents,
+	)
+
+	// GET /students/:id - Get student by ID
+	students.Get("/:id",
+		studentService.GetStudentByID,
+	)
+
+	// GET /students/:id/achievements - Get student achievements
+	students.Get("/:id/achievements",
+		middleware.RequirePermission("achievement:read"),
+		studentService.GetStudentAchievements,
+	)
+
+	// PUT /students/:id/advisor - Set advisor (Admin only)
+	students.Put("/:id/advisor",
+		middleware.RequirePermission("user:manage"),
+		studentService.SetAdvisor,
+	)
 }
 
+//
+// ==================== LECTURER ROUTES ======================
+//
+
+func LecturerRoutes(app *fiber.App, lecturerService *service.LecturerService) {
+	lecturers := app.Group("/api/v1/lecturers")
+	lecturers.Use(middleware.AuthRequired)
+
+	// GET /lecturers - List all lecturers
+	lecturers.Get("/",
+		lecturerService.GetAllLecturers,
+	)
+
+	// GET /lecturers/:id/advisees - Get lecturer's advisees
+	lecturers.Get("/:id/advisees",
+		lecturerService.GetLecturerAdvisees,
+	)
+}
 //
 // ==================== ACHIEVEMENT ROUTES ======================
 //
@@ -123,4 +156,10 @@ func AchievementRoutes(app *fiber.App, achievementService *service.AchievementSe
 		middleware.RequirePermission("achievement:update"),
 		achievementService.UploadAttachment,
 	)
+
+	// GET /achievements/:id/history - History achievement
+    achievements.Get("/:id/history",
+        middleware.RequirePermission("achievement:read"),
+        achievementService.GetAchievementHistory,
+    )
 }
