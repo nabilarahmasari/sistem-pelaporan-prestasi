@@ -1,7 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"math"
+	"net/http"
+	"os"
+	"path/filepath"
 	"project_uas/app/model"
 	"project_uas/app/repository"
 	"strconv"
@@ -9,6 +13,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type AchievementService struct {
@@ -712,8 +717,11 @@ func (s *AchievementService) RejectAchievement(c *fiber.Ctx) error {
 	})
 }
 
+// Ganti fungsi UploadAttachment yang lama dengan ini:
+
 //
 // ==================== UPLOAD ATTACHMENT (POST /achievements/:id/attachments) ======================
+// Handle REAL file upload dengan multipart/form-data
 //
 
 func (s *AchievementService) UploadAttachment(c *fiber.Ctx) error {
@@ -728,23 +736,6 @@ func (s *AchievementService) UploadAttachment(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse request
-	req := new(model.UploadAttachmentRequest)
-	if err := c.BodyParser(req); err != nil {
-		return c.Status(400).JSON(model.APIResponse{
-			Status: "error",
-			Error:  "invalid request body",
-		})
-	}
-
-	// Validasi
-	if err := s.validate.Struct(req); err != nil {
-		return c.Status(422).JSON(model.APIResponse{
-			Status: "error",
-			Error:  err.Error(),
-		})
-	}
-
 	// Get reference
 	reference, err := s.achievementRepo.GetReferenceByID(achievementID)
 	if err != nil {
@@ -754,7 +745,7 @@ func (s *AchievementService) UploadAttachment(c *fiber.Ctx) error {
 		})
 	}
 
-	// Check authorization
+	// Check authorization (hanya mahasiswa pemilik)
 	student, _ := s.studentRepo.FindByUserID(claims.UserID)
 	if student == nil || student.ID != reference.StudentID {
 		return c.Status(403).JSON(model.APIResponse{
@@ -763,22 +754,114 @@ func (s *AchievementService) UploadAttachment(c *fiber.Ctx) error {
 		})
 	}
 
-	// Create attachment
+	// Hanya bisa upload jika status = draft atau submitted
+	if reference.Status != "draft" && reference.Status != "submitted" {
+		return c.Status(400).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "can only upload attachments for draft or submitted achievements",
+		})
+	}
+
+	// Parse multipart file
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.Status(400).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "file is required",
+		})
+	}
+
+	// Validasi ukuran file (max 5MB)
+	maxSize := int64(5 * 1024 * 1024) // 5MB
+	if file.Size > maxSize {
+		return c.Status(400).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "file size exceeds 5MB limit",
+		})
+	}
+
+	// Validasi tipe file (hanya PDF, JPG, PNG, JPEG)
+	allowedTypes := map[string]bool{
+		"application/pdf":  true,
+		"image/jpeg":       true,
+		"image/jpg":        true,
+		"image/png":        true,
+	}
+
+	// Get MIME type from header
+	fileHeader, err := file.Open()
+	if err != nil {
+		return c.Status(500).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "failed to read file",
+		})
+	}
+	defer fileHeader.Close()
+
+	// Read first 512 bytes untuk detect MIME type
+	buffer := make([]byte, 512)
+	_, err = fileHeader.Read(buffer)
+	if err != nil {
+		return c.Status(500).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "failed to read file content",
+		})
+	}
+
+	// Detect MIME type
+	contentType := http.DetectContentType(buffer)
+	if !allowedTypes[contentType] {
+		return c.Status(400).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "file type not allowed. Only PDF, JPG, PNG are accepted",
+		})
+	}
+
+	// Generate unique filename
+	timestamp := time.Now().Unix()
+	randomString := uuid.New().String()[:8]
+	ext := filepath.Ext(file.Filename)
+	newFilename := fmt.Sprintf("%s_%d_%s%s", achievementID, timestamp, randomString, ext)
+
+	// Create uploads directory jika belum ada
+	uploadsDir := "./uploads"
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(uploadsDir, 0755); err != nil {
+			return c.Status(500).JSON(model.APIResponse{
+				Status: "error",
+				Error:  "failed to create uploads directory",
+			})
+		}
+	}
+
+	// Simpan file
+	filePath := filepath.Join(uploadsDir, newFilename)
+	if err := c.SaveFile(file, filePath); err != nil {
+		return c.Status(500).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "failed to save file",
+		})
+	}
+
+	// Create attachment object
 	attachment := model.Attachment{
-		FileName: req.FileName,
-		FileURL:  req.FileURL,
-		FileType: req.FileType,
+		FileName:   file.Filename, // Original filename
+		FileURL:    fmt.Sprintf("/uploads/%s", newFilename), // Relative path
+		FileType:   contentType,
+		UploadedAt: time.Now(),
 	}
 
 	// Add attachment ke MongoDB
 	if err := s.achievementRepo.AddAttachment(reference.MongoAchievementID, attachment); err != nil {
+		// Rollback: hapus file yang sudah diupload
+		os.Remove(filePath)
 		return c.Status(500).JSON(model.APIResponse{
 			Status: "error",
-			Error:  "failed to upload attachment",
+			Error:  "failed to save attachment metadata",
 		})
 	}
 
-	return c.JSON(model.APIResponse{
+	return c.Status(201).JSON(model.APIResponse{
 		Status:  "success",
 		Message: "attachment uploaded successfully",
 		Data:    attachment,
