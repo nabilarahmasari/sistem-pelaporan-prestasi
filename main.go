@@ -42,17 +42,10 @@ func main() {
 	// Initialize services
 	authService := service.NewAuthService(userRepo, roleRepo, permRepo)
 	userService := service.NewUserService(userRepo, roleRepo, permRepo, studentRepo, lecturerRepo)
-	
-	// StudentService dengan achievementRepo
 	studentService := service.NewStudentService(studentRepo, lecturerRepo, userRepo, achievementRepo)
-	
-	// LecturerService (NEW)
 	lecturerService := service.NewLecturerService(lecturerRepo, studentRepo, userRepo)
-	
 	achievementService := service.NewAchievementService(achievementRepo, studentRepo, lecturerRepo, userRepo)
-
 	reportService := service.NewReportService(achievementRepo, studentRepo, lecturerRepo, userRepo)
-
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
@@ -83,9 +76,9 @@ func main() {
 	routes.AuthRoutes(app, authService)
 	routes.UserRoutes(app, userService)
 	routes.StudentRoutes(app, studentService)
-	routes.LecturerRoutes(app, lecturerService) // NEW
+	routes.LecturerRoutes(app, lecturerService)
 	routes.AchievementRoutes(app, achievementService)
-	routes.ReportRoutes(app, reportService) // NEW
+	routes.ReportRoutes(app, reportService)
 
 	// Start server
 	port := config.AppConfig.Port
