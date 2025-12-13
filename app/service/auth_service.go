@@ -1,6 +1,9 @@
 package service
 
 import (
+	"log"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 
@@ -66,20 +69,28 @@ func (s *AuthService) Login(c *fiber.Ctx) error {
 	perms, _ := s.permRepo.GetPermissionsByRoleID(role.ID)
 
 	// response user
-userRes := model.UserResponse{
-    ID:          user.ID,
-    Username:    user.Username,
-    Email:       user.Email,
-    FullName:    user.FullName,
-    Role:        role.Name,
-    IsActive:    user.IsActive,  // ⭐ SUDAH ADA
-    CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"), // ⭐ TAMBAHKAN FORMAT
-    Permissions: perms,
-}
+	userRes := model.UserResponse{
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		FullName:    user.FullName,
+		Role:        role.Name,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"),
+		Permissions: perms,
+	}
 
 	// generate token
 	access, _ := utils.GenerateJWT(userRes)
 	refresh, _ := utils.GenerateRefreshToken(user.ID)
+
+	// Log successful login
+	log.Printf("[LOGIN] User: %s (%s) | Role: %s | Time: %s",
+		user.Username,
+		user.ID,
+		role.Name,
+		time.Now().Format("2006-01-02 15:04:05"),
+	)
 
 	return c.JSON(model.APIResponse{
 		Status: "success",
@@ -130,18 +141,26 @@ func (s *AuthService) Refresh(c *fiber.Ctx) error {
 	perms, _ := s.permRepo.GetPermissionsByRoleID(role.ID)
 
 	userRes := model.UserResponse{
-    ID:          user.ID,
-    Username:    user.Username,
-    Email:       user.Email,
-    FullName:    user.FullName,
-    Role:        role.Name,
-    IsActive:    user.IsActive,                            // ✅ tambahkan
-    CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"), // ✅ tambahkan
-    Permissions: perms,
-}
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		FullName:    user.FullName,
+		Role:        role.Name,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"),
+		Permissions: perms,
+	}
+
 	// generate new tokens
 	access, _ := utils.GenerateJWT(userRes)
 	refresh, _ := utils.GenerateRefreshToken(user.ID)
+
+	// Log token refresh
+	log.Printf("[REFRESH] User: %s (%s) | Time: %s",
+		user.Username,
+		user.ID,
+		time.Now().Format("2006-01-02 15:04:05"),
+	)
 
 	return c.JSON(model.APIResponse{
 		Status: "success",
@@ -186,10 +205,27 @@ func (s *AuthService) Profile(c *fiber.Ctx) error {
 }
 
 //
-// ==================== LOGOUT ======================
+// ==================== LOGOUT (IMPROVED VERSION) ======================
 //
 
 func (s *AuthService) Logout(c *fiber.Ctx) error {
+	// Verify user authenticated (defensive programming)
+	claims, ok := c.Locals("user").(*model.JWTClaims)
+	if !ok {
+		return c.Status(401).JSON(model.APIResponse{
+			Status: "error",
+			Error:  "unauthorized",
+		})
+	}
+
+	// Log logout activity (audit trail)
+	log.Printf("[LOGOUT] User: %s (%s) | Role: %s | Time: %s",
+		claims.Username,
+		claims.UserID,
+		claims.Role,
+		time.Now().Format("2006-01-02 15:04:05"),
+	)
+
 	return c.JSON(model.APIResponse{
 		Status:  "success",
 		Message: "logout successful",
