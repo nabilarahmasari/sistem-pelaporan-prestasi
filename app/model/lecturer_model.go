@@ -3,7 +3,7 @@ package model
 import "time"
 
 // ===================== LECTURER ENTITY ========================
-// Representasi tabel "lecturers" di database
+//  tabel "lecturers" di database
 
 type Lecturer struct {
 	ID         string    `json:"id" db:"id"`
@@ -14,7 +14,7 @@ type Lecturer struct {
 }
 
 // ===================== LECTURER PROFILE DTO ===================
-// Dipakai saat create/update user dengan role dosen
+//  create/update user dengan role dosen
 
 type LecturerProfileRequest struct {
 	LecturerID string `json:"lecturer_id" validate:"required"`
@@ -22,7 +22,7 @@ type LecturerProfileRequest struct {
 }
 
 // ===================== LECTURER RESPONSE ======================
-// Response untuk menampilkan data lecturer
+// menampilkan data lecturer
 
 type LecturerResponse struct {
 	ID         string `json:"id"`

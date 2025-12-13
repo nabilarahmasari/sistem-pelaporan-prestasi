@@ -3,7 +3,7 @@ package model
 import "time"
 
 // ===================== STUDENT ENTITY ========================
-// Representasi tabel "students" di database
+//  tabel "students" di database
 
 type Student struct {
 	ID           string    `json:"id" db:"id"`
@@ -11,12 +11,12 @@ type Student struct {
 	StudentID    string    `json:"student_id" db:"student_id"`
 	ProgramStudy string    `json:"program_study" db:"program_study"`
 	AcademicYear string    `json:"academic_year" db:"academic_year"`
-	AdvisorID    *string   `json:"advisor_id" db:"advisor_id"` // nullable
+	AdvisorID    *string   `json:"advisor_id" db:"advisor_id"` 
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 }
 
 // ===================== STUDENT PROFILE DTO ====================
-// Dipakai saat create/update user dengan role mahasiswa
+//  create/update user role mahasiswa
 
 type StudentProfileRequest struct {
 	StudentID    string  `json:"student_id" validate:"required"`
@@ -26,7 +26,7 @@ type StudentProfileRequest struct {
 }
 
 // ===================== STUDENT RESPONSE =======================
-// Response untuk menampilkan data student
+//  menampilkan data student
 
 type StudentResponse struct {
 	ID           string  `json:"id"`
@@ -39,7 +39,7 @@ type StudentResponse struct {
 }
 
 // ===================== SET ADVISOR REQUEST ====================
-// Untuk endpoint PUT /students/:id/advisor
+//  PUT /students/:id/advisor
 
 type SetAdvisorRequest struct {
 	AdvisorID string `json:"advisor_id" validate:"required"`

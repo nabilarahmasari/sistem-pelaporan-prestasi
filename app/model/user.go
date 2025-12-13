@@ -3,7 +3,7 @@ package model
 import "time"
 
 // ===================== USER ENTITY ========================
-// Representasi tabel "users" di database
+// tabel "users" di database
 
 type User struct {
 	ID           string    `json:"id"`
@@ -19,8 +19,7 @@ type User struct {
 }
 
 // ===================== USER CREATE REQUEST =====================
-// Dipakai untuk endpoint: POST /api/v1/users (Admin only)
-// Support create dengan profile student/lecturer sekaligus
+//  POST /api/v1/users (Admin only)
 
 type UserCreateRequest struct {
 	Username       string                  `json:"username" validate:"required"`
@@ -28,12 +27,12 @@ type UserCreateRequest struct {
 	Password       string                  `json:"password" validate:"required,min=8"`
 	FullName       string                  `json:"full_name" validate:"required"`
 	RoleName       string                  `json:"role_name" validate:"required"` // "Admin", "Mahasiswa", "Dosen Wali"
-	StudentProfile *StudentProfileRequest  `json:"student_profile,omitempty"`     // jika role = Mahasiswa
-	LecturerProfile *LecturerProfileRequest `json:"lecturer_profile,omitempty"`   // jika role = Dosen Wali
+	StudentProfile *StudentProfileRequest  `json:"student_profile,omitempty"`     
+	LecturerProfile *LecturerProfileRequest `json:"lecturer_profile,omitempty"`   
 }
 
 // ===================== USER UPDATE DTO =====================
-// Dipakai untuk endpoint: PUT /users/:id
+// PUT /users/:id
 
 type UserUpdateRequest struct {
 	Email    string `json:"email,omitempty" validate:"omitempty,email"`
@@ -42,14 +41,13 @@ type UserUpdateRequest struct {
 }
 
 // ===================== ASSIGN ROLE REQUEST ===================
-// Untuk endpoint PUT /users/:id/role
+// PUT /users/:id/role
 
 type AssignRoleRequest struct {
 	RoleName string `json:"role_name" validate:"required"`
 }
 
 // ===================== USER RESPONSE =======================
-// Dipakai untuk mengembalikan informasi user ke frontend
 // Tanpa password dan lebih ringan
 
 type UserResponse struct {
@@ -66,7 +64,7 @@ type UserResponse struct {
 }
 
 // ===================== USER LIST RESPONSE ====================
-// Untuk endpoint GET /users dengan pagination
+//  GET /users dengan pagination
 
 type UserListResponse struct {
 	Users      []UserResponse `json:"users"`
