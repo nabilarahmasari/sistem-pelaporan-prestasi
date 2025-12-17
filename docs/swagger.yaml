@@ -1,0 +1,1459 @@
+basePath: /api/v1
+definitions:
+  model.APIResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  model.AchievementCreateRequest:
+    properties:
+      achievement_type:
+        type: string
+      description:
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      points:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    required:
+    - achievement_type
+    - description
+    - title
+    type: object
+  model.AchievementListResponse:
+    properties:
+      achievements:
+        items:
+          $ref: '#/definitions/model.AchievementResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  model.AchievementResponse:
+    properties:
+      achievement_type:
+        type: string
+      attachments:
+        items:
+          $ref: '#/definitions/model.Attachment'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      id:
+        type: string
+      points:
+        type: integer
+      rejection_note:
+        type: string
+      status:
+        type: string
+      student_id:
+        type: string
+      submitted_at:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      verified_at:
+        type: string
+      verified_by:
+        type: string
+    type: object
+  model.AchievementUpdateRequest:
+    properties:
+      achievement_type:
+        type: string
+      description:
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      points:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  model.AssignRoleRequest:
+    properties:
+      role_name:
+        type: string
+    required:
+    - role_name
+    type: object
+  model.Attachment:
+    properties:
+      file_name:
+        type: string
+      file_type:
+        type: string
+      file_url:
+        type: string
+      uploaded_at:
+        type: string
+    type: object
+  model.LecturerProfileRequest:
+    properties:
+      department:
+        type: string
+      lecturer_id:
+        type: string
+    required:
+    - department
+    - lecturer_id
+    type: object
+  model.LecturerResponse:
+    properties:
+      created_at:
+        type: string
+      department:
+        type: string
+      id:
+        type: string
+      lecturer_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  model.LoginResponse:
+    properties:
+      refreshToken:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/model.UserResponse'
+    type: object
+  model.RefreshTokenRequest:
+    properties:
+      refreshToken:
+        type: string
+    required:
+    - refreshToken
+    type: object
+  model.RejectAchievementRequest:
+    properties:
+      rejection_note:
+        type: string
+    required:
+    - rejection_note
+    type: object
+  model.SetAdvisorRequest:
+    properties:
+      advisor_id:
+        type: string
+    required:
+    - advisor_id
+    type: object
+  model.StudentProfileRequest:
+    properties:
+      academic_year:
+        type: string
+      advisor_id:
+        description: optional saat create
+        type: string
+      program_study:
+        type: string
+      student_id:
+        type: string
+    required:
+    - academic_year
+    - program_study
+    - student_id
+    type: object
+  model.StudentResponse:
+    properties:
+      academic_year:
+        type: string
+      advisor_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      program_study:
+        type: string
+      student_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      lecturer_profile:
+        $ref: '#/definitions/model.LecturerProfileRequest'
+      password:
+        minLength: 8
+        type: string
+      role_name:
+        description: '"Admin", "Mahasiswa", "Dosen Wali"'
+        type: string
+      student_profile:
+        $ref: '#/definitions/model.StudentProfileRequest'
+      username:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - role_name
+    - username
+    type: object
+  model.UserListResponse:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/model.UserResponse'
+        type: array
+    type: object
+  model.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      lecturer_profile:
+        allOf:
+        - $ref: '#/definitions/model.LecturerResponse'
+        description: jika role = Dosen Wali
+      permissions:
+        items:
+          type: string
+        type: array
+      role:
+        type: string
+      student_profile:
+        allOf:
+        - $ref: '#/definitions/model.StudentResponse'
+        description: jika role = Mahasiswa
+      username:
+        type: string
+    type: object
+  model.UserUpdateRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      is_active:
+        description: untuk activate/deactivate user
+        type: boolean
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@unair.ac.id
+    name: API Support Team
+  description: REST API untuk Sistem Pelaporan Prestasi Mahasiswa dengan Role-Based
+    Access Control (RBAC). Mendukung manajemen prestasi mahasiswa, verifikasi dosen
+    wali, dan reporting.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Sistem Pelaporan Prestasi Mahasiswa API
+  version: "1.0"
+paths:
+  /achievements:
+    get:
+      consumes:
+      - application/json
+      description: 'Get achievements list (Mahasiswa: own, Dosen: advisees, Admin:
+        all)'
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        enum:
+        - draft
+        - submitted
+        - verified
+        - rejected
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of achievements
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.AchievementListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get achievements (filtered by role)
+      tags:
+      - Achievements
+    post:
+      consumes:
+      - application/json
+      description: Create new achievement draft
+      parameters:
+      - description: Achievement data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.AchievementCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Achievement created
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.AchievementResponse'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Mahasiswa only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Student profile not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create achievement (Mahasiswa only)
+      tags:
+      - Achievements
+  /achievements/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete achievement (only if status is draft)
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement deleted
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "400":
+          description: Can only delete draft achievements
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not your achievement
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete achievement (Mahasiswa only, draft status)
+      tags:
+      - Achievements
+    get:
+      consumes:
+      - application/json
+      description: Get detailed achievement information
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement details
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.AchievementResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get achievement by ID
+      tags:
+      - Achievements
+    put:
+      consumes:
+      - application/json
+      description: Update achievement data (only if status is draft)
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.AchievementUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement updated
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.AchievementResponse'
+              type: object
+        "400":
+          description: Can only update draft achievements
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not your achievement
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update achievement (Mahasiswa only, draft status)
+      tags:
+      - Achievements
+  /achievements/{id}/attachments:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file attachment to achievement (PDF, JPG, PNG max 5MB)
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: File to upload (PDF, JPG, PNG, max 5MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Attachment uploaded
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Attachment'
+              type: object
+        "400":
+          description: Invalid file or file too large
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not your achievement
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload attachment file (Mahasiswa only)
+      tags:
+      - Achievements
+  /achievements/{id}/history:
+    get:
+      consumes:
+      - application/json
+      description: Get timeline of achievement status changes
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement history
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get achievement status history
+      tags:
+      - Achievements
+  /achievements/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject submitted achievement with notes
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection note
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RejectAchievementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement rejected
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "400":
+          description: Achievement must be in submitted status
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not advisor of this student
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "422":
+          description: Validation error - rejection note required
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject achievement (Dosen Wali only)
+      tags:
+      - Achievements
+  /achievements/{id}/submit:
+    post:
+      consumes:
+      - application/json
+      description: Submit draft achievement to advisor for verification
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement submitted
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "400":
+          description: Achievement already submitted
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not your achievement
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit achievement for verification (Mahasiswa only)
+      tags:
+      - Achievements
+  /achievements/{id}/verify:
+    post:
+      consumes:
+      - application/json
+      description: Approve submitted achievement (only for your advisees)
+      parameters:
+      - description: Achievement Reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement verified
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "400":
+          description: Achievement must be in submitted status
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not advisor of this student
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Achievement not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify achievement (Dosen Wali only)
+      tags:
+      - Achievements
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with username/email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginResponse'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Invalid username or password
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Login to the system
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout current user (invalidate token on client side)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout from system
+      tags:
+      - Authentication
+  /auth/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get profile of currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - Authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access token using refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token refreshed
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginResponse'
+              type: object
+        "401":
+          description: Invalid refresh token
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Refresh access token
+      tags:
+      - Authentication
+  /lecturers:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all lecturers with pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of lecturers
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all lecturers
+      tags:
+      - Lecturers
+  /lecturers/{id}/advisees:
+    get:
+      consumes:
+      - application/json
+      description: Get all students advised by this lecturer
+      parameters:
+      - description: Lecturer ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of advisees
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Can only view own advisees
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Lecturer not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get lecturer's advisees
+      tags:
+      - Lecturers
+  /reports/statistics:
+    get:
+      consumes:
+      - application/json
+      description: 'Get statistics based on role (Mahasiswa: own, Dosen: advisees,
+        Admin: all)'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Achievement statistics
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Profile not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get achievement statistics
+      tags:
+      - Reports
+  /reports/student/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get comprehensive achievement report for a student
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Student report
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not authorized for this student
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Student not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get student achievement report
+      tags:
+      - Reports
+  /students:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all students with pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of students with user info
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all students
+      tags:
+      - Students
+  /students/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed student information including advisor
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Student details
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Student not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get student by ID
+      tags:
+      - Students
+  /students/{id}/achievements:
+    get:
+      consumes:
+      - application/json
+      description: Get all achievements of a student (with authorization check)
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        enum:
+        - draft
+        - submitted
+        - verified
+        - rejected
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of achievements
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Not authorized to view this student
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Student not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get student achievements
+      tags:
+      - Students
+  /students/{id}/advisor:
+    put:
+      consumes:
+      - application/json
+      description: Assign or change student's advisor (lecturer)
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Advisor ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SetAdvisorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Advisor set successfully
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Student or advisor not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Set student advisor (Admin only)
+      tags:
+      - Students
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all users with pagination and role filter
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by role name
+        enum:
+        - Admin
+        - Mahasiswa
+        - Dosen Wali
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all users (Admin only)
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Create new user with role and profile
+      parameters:
+      - description: User data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserResponse'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "409":
+          description: Username/Email already exists
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create new user (Admin only)
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user and associated profile
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user (Admin only)
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Get detailed user information by ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID (Admin only)
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update user information
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserResponse'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "409":
+          description: Email already used
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user (Admin only)
+      tags:
+      - Users
+  /users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Change user's role
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.AssignRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role assigned
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserResponse'
+              type: object
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "404":
+          description: User or role not found
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign role to user (Admin only)
+      tags:
+      - Users
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

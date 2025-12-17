@@ -12,23 +12,48 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	
+	// ⭐ WAJIB: Import docs yang akan di-generate
+	_ "project_uas/docs"
+	
+	// ⭐ WAJIB: Import fiber-swagger
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
+
+// ==================== ANOTASI GLOBAL SWAGGER ====================
+// Anotasi ini mendefinisikan informasi umum API
+
+// @title Sistem Pelaporan Prestasi Mahasiswa API
+// @version 1.0
+// @description REST API untuk Sistem Pelaporan Prestasi Mahasiswa dengan Role-Based Access Control (RBAC). Mendukung manajemen prestasi mahasiswa, verifikasi dosen wali, dan reporting.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support Team
+// @contact.email support@unair.ac.id
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:3000
+// @BasePath /api/v1
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	// Load config
 	config.LoadEnv()
-
-	// Initialize JWT
 	utils.InitJWT()
 
-	// Connect PostgreSQL database
+	// Connect databases
 	database.ConnectDatabase()
 	sqlDB, err := database.DB.DB()
 	if err != nil {
 		log.Fatal("Failed to get database connection:", err)
 	}
-
-	// Connect MongoDB database
 	database.ConnectMongoDB()
 
 	// Initialize repositories
@@ -61,7 +86,7 @@ func main() {
 	app.Use(cors.New())
 	app.Use(logger.New())
 
-	// Serve static files dari folder uploads
+	// Serve static files
 	app.Static("/uploads", "./uploads")
 
 	// Health check
@@ -69,10 +94,15 @@ func main() {
 		return c.JSON(fiber.Map{
 			"status":  "success",
 			"message": "API is running",
+			"docs":    "/swagger/index.html",
 		})
 	})
 
-	// Register routes
+	// ⭐ SWAGGER UI ROUTE
+	// Akses: http://localhost:3000/swagger/index.html
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
+	// Register API routes
 	routes.AuthRoutes(app, authService)
 	routes.UserRoutes(app, userService)
 	routes.StudentRoutes(app, studentService)
@@ -86,6 +116,7 @@ func main() {
 		port = "3000"
 	}
 
-	log.Printf("Server running on port %s", port)
+	log.Printf("🚀 Server running on port %s", port)
+	log.Printf("📚 Swagger docs: http://localhost:%s/swagger/index.html", port)
 	log.Fatal(app.Listen(":" + port))
 }
