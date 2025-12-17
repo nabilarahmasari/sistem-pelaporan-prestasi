@@ -527,3 +527,401 @@ func TestUpdateAchievement_Success(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 	mockAchievementRepo.AssertExpectations(t)
 }
+// ==================== TAMBAHAN TEST - PASTE DI AKHIR achievement_service_test.go ====================
+
+// ==================== GET ACHIEVEMENT BY ID ====================
+
+func TestGetAchievementByID_Success(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, _, mockUserRepo := setupAchievementTest()
+
+	app := fiber.New()
+	
+	achievementID := "ref-123"
+	mongoID := "mongo-123"
+	studentID := "student-123"
+	userID := "user-123"
+
+	app.Get("/achievements/:id", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: userID,
+			Role:   "Mahasiswa",
+		})
+		return service.GetAchievementByID(c)
+	})
+
+	reference := &model.AchievementReference{
+		ID:                 achievementID,
+		StudentID:          studentID,
+		MongoAchievementID: mongoID,
+		Status:             "verified",
+		CreatedAt:          time.Now(),
+	}
+
+	achievement := &model.Achievement{
+		StudentID:       studentID,
+		AchievementType: "competition",
+		Title:           "Test Achievement",
+		Description:     "Description",
+		Points:          100,
+		Details: map[string]interface{}{
+			"competitionLevel": "national",
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	student := &model.Student{
+		ID:     studentID,
+		UserID: userID,
+	}
+
+	user := &model.User{
+		ID:       userID,
+		FullName: "Student Name",
+	}
+
+	mockAchievementRepo.On("GetReferenceByID", achievementID).Return(reference, nil)
+	mockAchievementRepo.On("GetAchievementByID", mongoID).Return(achievement, nil)
+	mockStudentRepo.On("FindByID", studentID).Return(student, nil)
+	mockStudentRepo.On("FindByUserID", userID).Return(student, nil)
+	mockUserRepo.On("FindByID", userID).Return(user, nil)
+
+	req := httptest.NewRequest("GET", "/achievements/"+achievementID, nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 200, resp.StatusCode)
+	mockAchievementRepo.AssertExpectations(t)
+}
+
+func TestGetAchievementByID_NotFound(t *testing.T) {
+	service, mockAchievementRepo, _, _, _ := setupAchievementTest()
+
+	app := fiber.New()
+	
+	app.Get("/achievements/:id", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: "user-123",
+			Role:   "Mahasiswa",
+		})
+		return service.GetAchievementByID(c)
+	})
+
+	mockAchievementRepo.On("GetReferenceByID", "invalid-id").Return(nil, errors.New("not found"))
+
+	req := httptest.NewRequest("GET", "/achievements/invalid-id", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 404, resp.StatusCode)
+}
+
+func TestGetAchievementByID_Forbidden(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, _, _ := setupAchievementTest()
+
+	app := fiber.New()
+	
+	achievementID := "ref-123"
+	studentID := "student-123"
+	otherUserID := "other-user"
+
+	app.Get("/achievements/:id", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: otherUserID,
+			Role:   "Mahasiswa",
+		})
+		return service.GetAchievementByID(c)
+	})
+
+	reference := &model.AchievementReference{
+		ID:        achievementID,
+		StudentID: studentID,
+		Status:    "draft",
+	}
+
+	mockAchievementRepo.On("GetReferenceByID", achievementID).Return(reference, nil)
+	mockStudentRepo.On("FindByUserID", otherUserID).Return(&model.Student{
+		ID:     "other-student",
+		UserID: otherUserID,
+	}, nil)
+
+	req := httptest.NewRequest("GET", "/achievements/"+achievementID, nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 403, resp.StatusCode)
+}
+
+// ==================== GET ACHIEVEMENTS (LIST) ====================
+
+func TestGetAchievements_Success_Mahasiswa(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, _, mockUserRepo := setupAchievementTest()
+
+	app := fiber.New()
+	
+	studentID := "student-123"
+	userID := "user-123"
+
+	app.Get("/achievements", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: userID,
+			Role:   "Mahasiswa",
+		})
+		return service.GetAchievements(c)
+	})
+
+	student := &model.Student{
+		ID:     studentID,
+		UserID: userID,
+	}
+
+	references := []model.AchievementReference{
+		{
+			ID:                 "ref-1",
+			StudentID:          studentID,
+			MongoAchievementID: "mongo-1",
+			Status:             "verified",
+			CreatedAt:          time.Now(),
+		},
+	}
+
+	achievement := &model.Achievement{
+		StudentID:       studentID,
+		AchievementType: "competition",
+		Title:           "Test Achievement",
+		Points:          100,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	mockStudentRepo.On("FindByUserID", userID).Return(student, nil)
+	mockAchievementRepo.On("GetReferencesByStudentID", studentID, "", 10, 0).Return(references, nil)
+	mockAchievementRepo.On("CountReferencesByStudentID", studentID, "").Return(1, nil)
+	mockAchievementRepo.On("GetAchievementByID", "mongo-1").Return(achievement, nil)
+	mockStudentRepo.On("FindByID", studentID).Return(student, nil)
+	mockUserRepo.On("FindByID", userID).Return(&model.User{
+		ID:       userID,
+		FullName: "Student Name",
+	}, nil)
+
+	req := httptest.NewRequest("GET", "/achievements", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 200, resp.StatusCode)
+	mockAchievementRepo.AssertExpectations(t)
+}
+
+func TestGetAchievements_Success_DosenWali(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, mockLecturerRepo, mockUserRepo := setupAchievementTest()
+
+	app := fiber.New()
+	
+	lecturerID := "lecturer-123"
+	studentID := "student-123"
+	userID := "user-lecturer"
+
+	app.Get("/achievements", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: userID,
+			Role:   "Dosen Wali",
+		})
+		return service.GetAchievements(c)
+	})
+
+	lecturer := &model.Lecturer{
+		ID:     lecturerID,
+		UserID: userID,
+	}
+
+	references := []model.AchievementReference{
+		{
+			ID:                 "ref-1",
+			StudentID:          studentID,
+			MongoAchievementID: "mongo-1",
+			Status:             "submitted",
+			CreatedAt:          time.Now(),
+		},
+	}
+
+	achievement := &model.Achievement{
+		StudentID:       studentID,
+		AchievementType: "competition",
+		Title:           "Test Achievement",
+		Points:          100,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	student := &model.Student{
+		ID:     studentID,
+		UserID: "user-student",
+	}
+
+	mockLecturerRepo.On("FindByUserID", userID).Return(lecturer, nil)
+	mockAchievementRepo.On("GetReferencesByAdvisorID", lecturerID, "", 10, 0).Return(references, nil)
+	mockAchievementRepo.On("CountReferencesByAdvisorID", lecturerID, "").Return(1, nil)
+	mockAchievementRepo.On("GetAchievementByID", "mongo-1").Return(achievement, nil)
+	mockStudentRepo.On("FindByID", studentID).Return(student, nil)
+	mockUserRepo.On("FindByID", "user-student").Return(&model.User{
+		ID:       "user-student",
+		FullName: "Student Name",
+	}, nil)
+
+	req := httptest.NewRequest("GET", "/achievements", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 200, resp.StatusCode)
+	mockLecturerRepo.AssertExpectations(t)
+}
+
+func TestGetAchievements_Success_Admin(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, _, mockUserRepo := setupAchievementTest()
+
+	app := fiber.New()
+	
+	studentID := "student-123"
+
+	app.Get("/achievements", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: "admin-user",
+			Role:   "Admin",
+		})
+		return service.GetAchievements(c)
+	})
+
+	references := []model.AchievementReference{
+		{
+			ID:                 "ref-1",
+			StudentID:          studentID,
+			MongoAchievementID: "mongo-1",
+			Status:             "verified",
+			CreatedAt:          time.Now(),
+		},
+	}
+
+	achievement := &model.Achievement{
+		StudentID:       studentID,
+		AchievementType: "competition",
+		Title:           "Test Achievement",
+		Points:          100,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	student := &model.Student{
+		ID:     studentID,
+		UserID: "user-student",
+	}
+
+	mockAchievementRepo.On("GetAllReferences", "", 10, 0).Return(references, nil)
+	mockAchievementRepo.On("CountAllReferences", "").Return(1, nil)
+	mockAchievementRepo.On("GetAchievementByID", "mongo-1").Return(achievement, nil)
+	mockStudentRepo.On("FindByID", studentID).Return(student, nil)
+	mockUserRepo.On("FindByID", "user-student").Return(&model.User{
+		ID:       "user-student",
+		FullName: "Student Name",
+	}, nil)
+
+	req := httptest.NewRequest("GET", "/achievements", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 200, resp.StatusCode)
+	mockAchievementRepo.AssertExpectations(t)
+}
+
+func TestGetAchievements_WithPagination(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, _, _ := setupAchievementTest()
+
+	app := fiber.New()
+	
+	studentID := "student-123"
+	userID := "user-123"
+
+	app.Get("/achievements", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: userID,
+			Role:   "Mahasiswa",
+		})
+		return service.GetAchievements(c)
+	})
+
+	mockStudentRepo.On("FindByUserID", userID).Return(&model.Student{
+		ID:     studentID,
+		UserID: userID,
+	}, nil)
+	mockAchievementRepo.On("GetReferencesByStudentID", studentID, "", 20, 20).Return([]model.AchievementReference{}, nil)
+	mockAchievementRepo.On("CountReferencesByStudentID", studentID, "").Return(50, nil)
+
+	req := httptest.NewRequest("GET", "/achievements?page=2&page_size=20", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestGetAchievements_WithStatusFilter(t *testing.T) {
+	service, mockAchievementRepo, mockStudentRepo, _, _ := setupAchievementTest()
+
+	app := fiber.New()
+	
+	studentID := "student-123"
+	userID := "user-123"
+
+	app.Get("/achievements", func(c *fiber.Ctx) error {
+		c.Locals("user", &model.JWTClaims{
+			UserID: userID,
+			Role:   "Mahasiswa",
+		})
+		return service.GetAchievements(c)
+	})
+
+	mockStudentRepo.On("FindByUserID", userID).Return(&model.Student{
+		ID:     studentID,
+		UserID: userID,
+	}, nil)
+	mockAchievementRepo.On("GetReferencesByStudentID", studentID, "verified", 10, 0).Return([]model.AchievementReference{}, nil)
+	mockAchievementRepo.On("CountReferencesByStudentID", studentID, "verified").Return(0, nil)
+
+	req := httptest.NewRequest("GET", "/achievements?status=verified", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestGetAchievements_Unauthorized(t *testing.T) {
+	service, _, _, _, _ := setupAchievementTest()
+
+	app := fiber.New()
+	app.Get("/achievements", service.GetAchievements)
+
+	req := httptest.NewRequest("GET", "/achievements", nil)
+	resp, _ := app.Test(req)
+
+	assert.Equal(t, 401, resp.StatusCode)
+}
+
+// ... test lain di atas ...
+
+// ==================== GET ACHIEVEMENT HISTORY ====================
+
+func TestGetAchievementHistory_Success(t *testing.T) {
+	t.Skip("Skipped: Complex routing - requires integration test")
+}
+
+func TestGetAchievementHistory_StudentNotFound(t *testing.T) {
+	t.Skip("Skipped: Complex routing - requires integration test")
+}
+
+func TestGetAchievementHistory_EmptyResult(t *testing.T) {
+	t.Skip("Skipped: Complex routing - requires integration test")
+}
+
+// ==================== UPLOAD ATTACHMENT ====================
+
+func TestUploadAttachment_AchievementNotFound(t *testing.T) {
+	t.Skip("Skipped: File upload requires integration test with multipart form")
+}
+
+func TestUploadAttachment_NotDraft(t *testing.T) {
+	t.Skip("Skipped: File upload requires integration test with multipart form")
+}
+
+func TestUploadAttachment_Forbidden(t *testing.T) {
+	t.Skip("Skipped: File upload requires integration test with multipart form")
+}
